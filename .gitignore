@@ -1,0 +1,14 @@
+### IDEs
+.idea/
+.vs/
+
+### Python
+.venv/
+__pypackages__/
+__pycache__/
+*.py[cod]
+*$py.class
+
+### Translations
+*.mo
+*.pot
