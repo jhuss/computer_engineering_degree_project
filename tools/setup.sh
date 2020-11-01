@@ -15,6 +15,7 @@
 #   limitations under the License.
 
 
+# paths
 TOOLS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PROJECT_DIR="$(dirname "$TOOLS_DIR")"
 VIRTUALENV_DIR="$PROJECT_DIR/.venv"

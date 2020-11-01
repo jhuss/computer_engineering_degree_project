@@ -21,8 +21,9 @@ if [[ "$0" =~ ^. ]]; then
 else
   SCRIPT_PATH="/$(dirname "$0")"
 fi
-SCRIPT_PATH="${SCRIPT_PATH/./""}"
 
+# paths
+SCRIPT_PATH="${SCRIPT_PATH/./""}"
 TOOLS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )$SCRIPT_PATH"
 
 # parse arguments

@@ -15,6 +15,14 @@
 #   limitations under the License.
 
 
+# helpers
+function join_array {
+  local char=$1; shift;
+  local array=$1; shift;
+  if [ -n "$array" ]; then printf %s "$array" "${@/#/$char}"; fi
+}
+
+# paths
 TOOLS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PROJECT_DIR="$(dirname "$TOOLS_DIR")"
 VIRTUALENV_DIR="$PROJECT_DIR/.venv"
@@ -24,6 +32,33 @@ VIRTUALENV_ACTIVATING_LABEL="Activating python virtual environment..."
 RUNNING_SERVER_LABEL="Running Server..."
 REPLACE_CHAR="="
 
+# options
+ENVIRONMENT_MODE=""  # empty is for production
+
+# parse arguments
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+  -d|--develop)
+    # override TOOLS_DIR with -t|--tools argument value
+    ENVIRONMENT_MODE="develop"
+    shift # past argument
+    shift # past value
+    ;;
+  -h)
+    echo "server.sh help:"
+    echo "arguments:"
+    echo -e "\t-d|--develop\tSet development environment."
+    exit 0
+    shift
+    ;;
+esac
+done
+set -- "${POSITIONAL[@]}"
+
 # check if virtualenv exist
 if [ -d "$VIRTUALENV_DIR" ]; then
   # activate virtualenv
@@ -32,8 +67,14 @@ if [ -d "$VIRTUALENV_DIR" ]; then
   source ${TOOLS_DIR}/activate.sh -t "$TOOLS_DIR"
 
   # run server
+  SERVER_ARGS=()
+  SERVER_ARGS_STRING=""
+
+  if [ -n "$ENVIRONMENT_MODE" ]; then SERVER_ARGS+=("--mode $ENVIRONMENT_MODE"); fi
+  if [ ${#SERVER_ARGS[@]} -gt 0 ]; then SERVER_ARGS_STRING=" $(join_array " " "${SERVER_ARGS[@]}")"; fi
+
   echo -e "\n${RUNNING_SERVER_LABEL}\n${RUNNING_SERVER_LABEL//?/$REPLACE_CHAR}"
-  cd "$PROJECT_DIR" && python -m "app.server"
+  cd "$PROJECT_DIR" && echo "$SERVER_ARGS_STRING" | xargs python -m "app.server"
 else
   echo "Python virtual environment does not exist."
   echo "Create it with setup.sh script."
