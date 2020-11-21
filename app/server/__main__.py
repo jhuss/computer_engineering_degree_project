@@ -19,6 +19,7 @@ import sys
 from sanic import Sanic
 from sanic.log import logger
 from sanic.response import json
+from app.server.modules.capture import capture_module
 
 # get init arguments
 argument_parser = argparse.ArgumentParser()
@@ -41,10 +42,14 @@ try:
 except FileNotFoundError as e:
     logger.error("!!! the configuration file for \"{}\" does not exist or could not be loaded".format(environment))
 
+# register modules
+Server.blueprint(capture_module)
+
 
 @Server.route("/")
 async def root(request):
     return json({"home_page": "TODO"})
+
 
 if __name__ == "__main__":
     if Server.config.DEBUG:
