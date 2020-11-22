@@ -55,4 +55,8 @@ if __name__ == "__main__":
     if Server.config.DEBUG:
         logger.info("DEVELOP MODE ENABLED")
 
-    Server.run(host=Server.config.HOST, port=Server.config.PORT, debug=Server.config.DEBUG)
+    try:
+        Server.run(host=Server.config.HOST, port=Server.config.PORT, debug=Server.config.DEBUG)
+    except KeyboardInterrupt:
+        Server.stop()
+        sys.exit()

@@ -17,19 +17,28 @@ from typing import Optional
 from sanic.response import json, raw
 from sanic import Blueprint
 from app.server.camera import Camera
+from .motion_sensor import MotionSensor
 
 capture_module = Blueprint('capture_module')
 config: dict = {}
 camera: Optional[Camera] = None
+motion_capture: Optional[MotionSensor] = None
 
 
 @capture_module.listener('before_server_start')
 async def setup_capture(app, loop):
     global config
     global camera
+    global motion_capture
 
     config = app.config
     camera = Camera(config.get('CAMERA_SETTINGS'))
+    motion_capture = MotionSensor(camera)
+
+
+@capture_module.listener('before_server_stop')
+async def stop_capture(app, loop):
+    motion_capture.stop()
 
 
 @capture_module.route('/capture', methods=['GET'])

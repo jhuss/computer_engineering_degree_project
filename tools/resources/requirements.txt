@@ -1,1 +1,2 @@
 sanic==20.9.1
+gpiozero==1.5.1
