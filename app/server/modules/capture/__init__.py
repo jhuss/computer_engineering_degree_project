@@ -16,7 +16,7 @@
 from typing import Optional
 from sanic.response import json, raw
 from sanic import Blueprint
-from app.server.camera import Camera
+from app.server.utils.camera import Camera
 from .motion_sensor import MotionSensor
 
 capture_module = Blueprint('capture_module')

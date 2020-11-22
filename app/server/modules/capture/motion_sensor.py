@@ -18,7 +18,7 @@ import threading
 from signal import SIGTERM, sigwait, pthread_kill
 from gpiozero import MotionSensor as GPIOMotionSensor
 from sanic.log import logger
-from app.server.camera import Camera
+from app.server.utils.camera import Camera
 
 
 class MotionSensor:
