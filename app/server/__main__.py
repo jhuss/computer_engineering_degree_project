@@ -23,37 +23,37 @@ from app.server.modules.capture import capture_module
 
 # get init arguments
 argument_parser = argparse.ArgumentParser()
-argument_parser.add_argument("--mode", type=str, default="production")
+argument_parser.add_argument('--mode', type=str, default='production')
 args = argument_parser.parse_args(sys.argv[1:])
 
 # set run mode
-environments = ["develop", "production"]
+environments = ['develop', 'production']
 environment = str(args.mode).lower()
 if environment not in environments:
-    logger.error("Environment \"{}\" not supported".format(environment))
+    logger.error('Environment \'{}\' not supported'.format(environment))
     exit(1)
 
-# Project Name "ImgRecSysAlerts", alias for: "Image Recognition System to Issue Security Alerts"
-Server = Sanic("ImgRecSysAlerts")
+# Project Name 'ImgRecSysAlerts', alias for: 'Image Recognition System to Issue Security Alerts'
+Server = Sanic('ImgRecSysAlerts')
 
 # load configuration
 try:
-    Server.update_config("{}/config/{}.py".format(os.getcwd(), environment))
+    Server.update_config('{}/config/{}.py'.format(os.getcwd(), environment))
 except FileNotFoundError as e:
-    logger.error("!!! the configuration file for \"{}\" does not exist or could not be loaded".format(environment))
+    logger.error('!!! the configuration file for \'{}\' does not exist or could not be loaded'.format(environment))
 
 # register modules
 Server.blueprint(capture_module)
 
 
-@Server.route("/")
+@Server.route('/')
 async def root(request):
-    return json({"home_page": "TODO"})
+    return json({'home_page': 'TODO'})
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     if Server.config.DEBUG:
-        logger.info("DEVELOP MODE ENABLED")
+        logger.info('DEVELOP MODE ENABLED')
 
     try:
         Server.run(host=Server.config.HOST, port=Server.config.PORT, debug=Server.config.DEBUG)

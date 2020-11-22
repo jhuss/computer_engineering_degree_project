@@ -58,19 +58,19 @@ class Camera:
         os_devices = os.listdir(self.DEVICES_PATH)
 
         for os_device in os_devices:
-            device_idx = int(re.match(".*?([0-9]+)$", os_device).group(1))
+            device_idx = int(re.match('.*?([0-9]+)$', os_device).group(1))
             device = self.get_device(device_idx)
 
             if device:
-                devices.append({"name": os_device, "idx": device_idx, 'control': device})
+                devices.append({'name': os_device, 'idx': device_idx, 'control': device})
                 device.grab()
 
         return sorted(devices, key=lambda i: i['idx'])
 
     def get_image_from(self, device_idx: int):
         try:
-            device = next(iter(list(filter(lambda x: x.get("idx") == device_idx, self.AVAILABLE_DEVICES))))
-            device_control = device.get("control")
+            device = next(iter(list(filter(lambda x: x.get('idx') == device_idx, self.AVAILABLE_DEVICES))))
+            device_control = device.get('control')
 
             grab = None
             for i in range(self.DEVICE_AVOID_GRAB):

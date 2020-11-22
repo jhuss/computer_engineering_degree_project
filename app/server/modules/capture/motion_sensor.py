@@ -35,13 +35,13 @@ class MotionSensor:
         sensor.when_motion = self.sensor_on
         sensor.when_no_motion = self.sensor_off
         sigwait([SIGTERM])
-        logger.info("Stopping Motion Sensor")
+        logger.info('Stopping Motion Sensor')
 
     def sensor_on(self):
-        print("SENSOR ON")
+        print('SENSOR ON')
 
     def sensor_off(self):
-        print("SENSOR OFF")
+        print('SENSOR OFF')
 
     def run(self):
         self.ACTIVITY_THREAD = threading.Thread(target=self.sensor_activity, args=[])

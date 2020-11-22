@@ -46,6 +46,6 @@ async def capture(request):
     captured_image = camera.get_image()
 
     if captured_image is not None:
-        return raw(captured_image.tobytes(), content_type="image/png")
+        return raw(captured_image.tobytes(), content_type='image/png')
     else:
-        return json({"error": "device not found"}, 500)
+        return json({'error': 'device not found'}, 500)
