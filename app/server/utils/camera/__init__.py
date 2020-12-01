@@ -13,10 +13,12 @@
 #   limitations under the License.
 
 
-from typing import Optional
+from typing import Optional, Callable
 import cv2 as cv
 import os
 import re
+from time import sleep
+import threading
 from .suppress_output import SuppressOutput
 
 
@@ -28,7 +30,10 @@ class CameraSettings(dict):
 
 
 class Camera:
-    API_CONTROL = cv.CAP_V4L2
+    API_CONTROL: int = cv.CAP_V4L2
+    IMAGE_EXTENSION: str = '.jpg'
+    ENCODE_PARAMETERS: list = [int(cv.IMWRITE_JPEG_QUALITY), 85]
+    FRAMES_PER_SECOND: int = 16
 
     def __init__(self, camera_settings: Optional[CameraSettings]):
         self.DEVICES_PATH = camera_settings.get('DEVICES_PATH')
@@ -67,21 +72,62 @@ class Camera:
 
         return sorted(devices, key=lambda i: i['idx'])
 
-    def get_image_from(self, device_idx: int):
+    def get_from_available_devices(self, device_idx: int):
         try:
-            device = next(iter(list(filter(lambda x: x.get('idx') == device_idx, self.AVAILABLE_DEVICES))))
-            device_control = device.get('control')
-
-            grab = None
-            for i in range(self.DEVICE_AVOID_GRAB):
-                grab = device_control.grab()  # avoid buffer
-            _, frame = device_control.retrieve(grab)
-            _, frame = cv.imencode('.png', cv.rotate(frame, cv.ROTATE_180))
-
-            return frame
+            return next(iter(list(filter(lambda x: x.get('idx') == device_idx, self.AVAILABLE_DEVICES))))
         except Exception as e:
             print(e)
             return None
 
-    def get_image(self):
-        return self.get_image_from(self.PREFERRED_DEVICE)
+    def get_device_control(self, device_idx: int):
+        device_idx = device_idx if device_idx is not None else self.PREFERRED_DEVICE
+        device = self.get_from_available_devices(device_idx)
+
+        if device is None:
+            return None
+
+        return device.get('control')
+
+    def get_image(self, device_idx: int = None):
+        device_control = self.get_device_control(device_idx)
+        grab = None
+        frame = None
+
+        if device_control is not None:
+            for i in range(self.DEVICE_AVOID_GRAB):
+                grab = device_control.grab()  # avoid buffer
+
+            _, frame = device_control.retrieve(grab)
+            _, frame = cv.imencode(self.IMAGE_EXTENSION, cv.rotate(frame, cv.ROTATE_180), self.ENCODE_PARAMETERS)
+
+        return frame
+
+    def continuous_capture_thread(self, event_control: threading.Event, capture_callback: Callable[[list, int], None] = None, device_idx: int = None):
+        device_control = self.get_device_control(device_idx)
+
+        if device_control is not None:
+            global_frames_count = 0
+
+            for i in range(self.DEVICE_AVOID_GRAB):
+                device_control.grab()  # avoid buffer
+
+            while not event_control.isSet():
+                frame_counter = 0
+                frame_time = float(1/self.FRAMES_PER_SECOND)
+
+                while frame_counter < self.FRAMES_PER_SECOND:
+                    frame_counter += 1
+                    global_frames_count += 1
+                    grab = device_control.grab()
+                    _, frame = device_control.retrieve(grab)
+                    _, frame = cv.imencode(self.IMAGE_EXTENSION, cv.rotate(frame, cv.ROTATE_180), self.ENCODE_PARAMETERS)
+                    if frame is not None and capture_callback is not None:
+                        capture_callback(frame, global_frames_count)
+                    else:
+                        print('--CAPTURE ERROR--')
+
+                    # check if the sensor turns off while taking photos
+                    if event_control.isSet():
+                        break
+
+                    sleep(frame_time)

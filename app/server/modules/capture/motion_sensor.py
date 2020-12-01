@@ -16,18 +16,26 @@
 from typing import Optional
 import threading
 from signal import SIGTERM, sigwait, pthread_kill
+from datetime import datetime
+from uuid import uuid4
 from gpiozero import MotionSensor as GPIOMotionSensor
 from sanic.log import logger
 from app.server.utils.camera import Camera
+from app.server.utils.storage import Storage
 
 
 class MotionSensor:
     GPIO_PIN: int = 21
     ACTIVITY_THREAD: Optional[threading.Thread] = None
+    CAPTURE_THREAD_EVENT: Optional[threading.Event] = None
+    CAPTURE_THREAD: Optional[threading.Thread] = None
     CAMERA: Optional[Camera] = None
+    STORAGE: Optional[Storage] = None
+    SENSOR_ACTIVATION_ID: str = None
 
-    def __init__(self, camera: Optional[Camera]):
+    def __init__(self, camera: Optional[Camera], storage: Optional[Storage]):
         self.CAMERA = camera
+        self.STORAGE = storage
         self.run()
 
     def sensor_activity(self):
@@ -38,10 +46,33 @@ class MotionSensor:
         logger.info('Stopping Motion Sensor')
 
     def sensor_on(self):
-        print('SENSOR ON')
+        logger.info('SENSOR ACTIVATED!')
+
+        now = datetime.now()
+        timestamp = int(now.timestamp())
+        self.SENSOR_ACTIVATION_ID = '{}_{}'.format(timestamp, str(uuid4()))
+
+        self.CAPTURE_THREAD_EVENT = threading.Event()
+        self.CAPTURE_THREAD = threading.Thread(
+            target=self.CAMERA.continuous_capture_thread,
+            args=[self.CAPTURE_THREAD_EVENT, self.continuous_capture_callback]
+        )
+        self.CAPTURE_THREAD.start()
+
+    def continuous_capture_callback(self, frame, frames_count):
+        saved = self.STORAGE.save_image(
+            frame,
+            self.SENSOR_ACTIVATION_ID,
+            'capture_{}'.format(frames_count),
+            self.CAMERA.IMAGE_EXTENSION
+        )
 
     def sensor_off(self):
-        print('SENSOR OFF')
+        logger.info('SENSOR QUIET')
+
+        if self.CAPTURE_THREAD_EVENT:
+            self.CAPTURE_THREAD_EVENT.set()
+            self.CAPTURE_THREAD.join()
 
     def run(self):
         self.ACTIVITY_THREAD = threading.Thread(target=self.sensor_activity, args=[])
