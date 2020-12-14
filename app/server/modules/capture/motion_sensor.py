@@ -22,6 +22,7 @@ from gpiozero import MotionSensor as GPIOMotionSensor
 from sanic.log import logger
 from app.server.utils.camera import Camera
 from app.server.utils.storage import Storage
+from app.server.tasks import analyze_image
 
 
 class MotionSensor:
@@ -60,12 +61,14 @@ class MotionSensor:
         self.CAPTURE_THREAD.start()
 
     def continuous_capture_callback(self, frame, frames_count):
-        saved = self.STORAGE.save_image(
+        saved_image = self.STORAGE.save_image(
             frame,
             self.SENSOR_ACTIVATION_ID,
             'capture_{}'.format(frames_count),
             self.CAMERA.IMAGE_EXTENSION
         )
+        task = analyze_image(saved_image)
+        print(task(blocking=True, timeout=5))
 
     def sensor_off(self):
         logger.info('SENSOR QUIET')

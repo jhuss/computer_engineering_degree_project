@@ -30,7 +30,7 @@ REPLACE_CHAR="="
 # check if virtualenv exist
 if [ ! -d "$VIRTUALENV_DIR" ]; then
   echo -e "${VIRTUALENV_INSTALLING_LABEL}\n${VIRTUALENV_INSTALLING_LABEL//?/$REPLACE_CHAR}"
-  virtualenv "$VIRTUALENV_DIR" || $(echo "error creating the python virtual environment." && exit 1)
+  python3 -m venv --system-site-packages --copies "$VIRTUALENV_DIR" || $(echo "error creating the python virtual environment." && exit 1)
 
   # activate virtualenv
   echo -e "\n${VIRTUALENV_ACTIVATING_LABEL}\n${VIRTUALENV_ACTIVATING_LABEL//?/$REPLACE_CHAR}"

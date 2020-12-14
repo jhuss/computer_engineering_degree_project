@@ -14,10 +14,12 @@
 
 
 from typing import Optional
+from datetime import datetime
 from sanic.response import json, raw
 from sanic import Blueprint
 from app.server.utils.camera import Camera
 from app.server.utils.storage import Storage
+from app.server.tasks import analyze_image
 from .motion_sensor import MotionSensor
 
 capture_module = Blueprint('capture_module')
@@ -50,6 +52,15 @@ async def capture(request):
     captured_image = camera.get_image()
 
     if captured_image is not None:
+        saved_image = storage.save_image(
+            captured_image,
+            '',
+            'capture_{}'.format(datetime.now().strftime("%d:%m:%Y_%H:%M:%S")),
+            camera.IMAGE_EXTENSION
+        )
+        task = analyze_image(saved_image)
+        print(task(blocking=True, timeout=5))
+
         return raw(captured_image.tobytes(), content_type='image/png')
     else:
         return json({'error': 'device not found'}, 500)

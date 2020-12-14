@@ -73,6 +73,9 @@ if [ -d "$VIRTUALENV_DIR" ]; then
   if [ -n "$ENVIRONMENT_MODE" ]; then SERVER_ARGS+=("--mode $ENVIRONMENT_MODE"); fi
   if [ ${#SERVER_ARGS[@]} -gt 0 ]; then SERVER_ARGS_STRING=" $(join_array " " "${SERVER_ARGS[@]}")"; fi
 
+  # set environment mode to task queue
+  export task_queue_environment=$ENVIRONMENT_MODE
+
   echo -e "\n${RUNNING_SERVER_LABEL}\n${RUNNING_SERVER_LABEL//?/$REPLACE_CHAR}"
   cd "$PROJECT_DIR" && echo "$SERVER_ARGS_STRING" | xargs python -m "app.server"
 else

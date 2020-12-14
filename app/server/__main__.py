@@ -16,6 +16,7 @@
 import argparse
 import os
 import sys
+from subprocess import Popen, PIPE
 from sanic import Sanic
 from sanic.log import logger
 from sanic.response import json
@@ -49,6 +50,18 @@ Server.blueprint(capture_module)
 @Server.route('/')
 async def root(request):
     return json({'home_page': 'TODO'})
+
+
+@Server.listener('before_server_start')
+async def before_server_start(app, loop):
+    app.task_queue_process = Popen(['huey_consumer', 'app.server.tasks.task_queue'], stdout=PIPE, stderr=PIPE)
+    logger.info('TASK QUEUE STARTED')
+
+
+@Server.listener('after_server_stop')
+async def after_server_stop(app, loop):
+    app.task_queue_process.terminate()
+    logger.info('TASK QUEUE TERMINATED')
 
 
 if __name__ == '__main__':
