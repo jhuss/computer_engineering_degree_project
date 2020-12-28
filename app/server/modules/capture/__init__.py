@@ -15,17 +15,19 @@
 
 from typing import Optional
 from datetime import datetime
-from sanic.response import json, raw
 from sanic import Blueprint
+from sanic.response import json, raw
+from sanic.log import logger
 from app.server.utils.camera import Camera
 from app.server.utils.storage import Storage
-from app.server.tasks import analyze_image
+from app.server.utils.image_analysis import ImageAnalysis
 from .motion_sensor import MotionSensor
 
 capture_module = Blueprint('capture_module')
 config: dict = {}
 camera: Optional[Camera] = None
 storage: Optional[Storage] = None
+image_analysis: Optional[ImageAnalysis] = None
 motion_capture: Optional[MotionSensor] = None
 
 
@@ -34,17 +36,23 @@ async def setup_capture(app, loop):
     global config
     global camera
     global storage
+    global image_analysis
     global motion_capture
 
     config = app.config
     camera = Camera(config.get('CAMERA_SETTINGS'))
     storage = Storage(config.get('STORAGE_SETTINGS'))
-    motion_capture = MotionSensor(camera, storage)
+    image_analysis = ImageAnalysis(storage)
+
+    logger.info('MOTION SENSOR ENABLED: {}'.format(config.get('MOTION_SENSOR_ENABLE')))
+    if config.get('MOTION_SENSOR_ENABLE') is True:
+        motion_capture = MotionSensor(camera, storage, image_analysis)
 
 
 @capture_module.listener('before_server_stop')
 async def stop_capture(app, loop):
-    motion_capture.stop()
+    if motion_capture is not None:
+        motion_capture.stop()
 
 
 @capture_module.route('/capture', methods=['GET'])
@@ -58,8 +66,7 @@ async def capture(request):
             'capture_{}'.format(datetime.now().strftime("%d:%m:%Y_%H:%M:%S")),
             camera.IMAGE_EXTENSION
         )
-        task = analyze_image(saved_image)
-        print(task(blocking=True, timeout=5))
+        image_analysis.add_to_queue([saved_image])
 
         return raw(captured_image.tobytes(), content_type='image/png')
     else:

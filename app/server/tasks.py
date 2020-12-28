@@ -45,8 +45,3 @@ class TaskQueue(SqliteHuey):
 
 
 task_queue: TaskQueue = TaskQueue()
-
-
-@task_queue.task()
-def analyze_image(image_path):
-    return image_path

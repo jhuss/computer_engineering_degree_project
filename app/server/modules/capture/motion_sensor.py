@@ -22,7 +22,7 @@ from gpiozero import MotionSensor as GPIOMotionSensor
 from sanic.log import logger
 from app.server.utils.camera import Camera
 from app.server.utils.storage import Storage
-from app.server.tasks import analyze_image
+from app.server.utils.image_analysis import ImageAnalysis
 
 
 class MotionSensor:
@@ -32,11 +32,13 @@ class MotionSensor:
     CAPTURE_THREAD: Optional[threading.Thread] = None
     CAMERA: Optional[Camera] = None
     STORAGE: Optional[Storage] = None
+    IMAGE_ANALYSIS: Optional[ImageAnalysis] = None
     SENSOR_ACTIVATION_ID: str = None
 
-    def __init__(self, camera: Optional[Camera], storage: Optional[Storage]):
+    def __init__(self, camera: Camera, storage: Storage, image_analysis: ImageAnalysis):
         self.CAMERA = camera
         self.STORAGE = storage
+        self.IMAGE_ANALYSIS = image_analysis
         self.run()
 
     def sensor_activity(self):
@@ -67,8 +69,7 @@ class MotionSensor:
             'capture_{}'.format(frames_count),
             self.CAMERA.IMAGE_EXTENSION
         )
-        task = analyze_image(saved_image)
-        print(task(blocking=True, timeout=5))
+        self.IMAGE_ANALYSIS.add_to_queue([saved_image])
 
     def sensor_off(self):
         logger.info('SENSOR QUIET')

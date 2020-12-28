@@ -4,6 +4,9 @@ DEBUG = False
 PORT = 8000
 HOST = 'localhost'
 
+# general options
+MOTION_SENSOR_ENABLE = True
+
 # camera
 CAMERA_SETTINGS = {
     'DEVICES_PATH': '/sys/class/video4linux',
