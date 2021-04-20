@@ -1,3 +1,4 @@
 sanic==20.9.1
 gpiozero==1.5.1
 huey==2.3.0
+https://github.com/google-coral/pycoral/releases/download/release-frogfish/tflite_runtime-2.5.0-cp38-cp38-linux_armv7l.whl

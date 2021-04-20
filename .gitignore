@@ -1,11 +1,14 @@
-data/
+data/captured_images/
+data/task_queue/
 
 ### IDEs
 .idea/
 .vs/
+workspace.code-workspace
 
 ### Python
 .venv/
+.venv-dev/
 __pypackages__/
 __pycache__/
 *.py[cod]

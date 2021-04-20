@@ -13,12 +13,14 @@
 #   limitations under the License.
 
 
-from time import sleep
-from json import dumps as json_dumps
+from os.path import join as join_path
+from PIL import Image
 from queue import Queue
 from threading import Thread
 from app.server.tasks import task_queue
 from app.server.utils.storage import Storage
+from .ml_interpreter import TensorFlowInterpreter
+from .detection_phase import DetectionPhase
 
 
 class ImageAnalysisWorker(Thread):
@@ -41,6 +43,8 @@ class ImageAnalysis:
 
     def __init__(self, storage: Storage):
         self.storage = storage
+        self.ml_interpreter = TensorFlowInterpreter(storage)
+        self.detection_phase = DetectionPhase(self.ml_interpreter)
         self.image_processing_task = task_queue.task()(self.image_process)
         self.worker = ImageAnalysisWorker(self.queue)
         self.worker.daemon = True
@@ -51,5 +55,7 @@ class ImageAnalysis:
             self.queue.put((self.image_processing_task, image_data))
 
     def image_process(self, image_data):
-        # TODO
-        print(image_data)
+        # image_data example: {'folder': 'data/captured_images', 'image': 'capture_16:12:2020_04:02:27.jpg'}
+        img = Image.open(join_path(image_data['folder'], image_data['image']))
+        image_analyzed = self.detection_phase.detect(img)
+        # TODO: create alert if image_analyzed has results

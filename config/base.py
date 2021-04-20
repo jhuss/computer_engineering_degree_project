@@ -18,5 +18,7 @@ CAMERA_SETTINGS = {
 # storage
 STORAGE_SETTINGS = {
     'DATA_FOLDER': 'data',
-    'CAPTURE_FOLDER': 'captured_images'  # relatives to DATA_FOLDER
+    # relatives to 'DATA_FOLDER'
+    'CAPTURE_FOLDER': 'captured_images',
+    'ML_MODEL_FOLDER': 'ml_models'
 }

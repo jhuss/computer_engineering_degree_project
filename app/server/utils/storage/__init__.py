@@ -22,12 +22,14 @@ from datetime import datetime
 class StorageSettings(dict):
     DATA_PATH: str = None
     CAPTURE_PATH: str = None
+    ML_MODEL_PATH: str = None
 
 
 class Storage(object):
     def __init__(self, storage_settings: Optional[StorageSettings]):
         self.DATA_PATH = storage_settings.get('DATA_FOLDER')
         self.CAPTURE_PATH = join_path(self.DATA_PATH, storage_settings.get('CAPTURE_FOLDER'))
+        self.ML_MODEL_PATH = join_path(self.DATA_PATH, storage_settings.get('ML_MODEL_FOLDER'))
         Path(self.CAPTURE_PATH).mkdir(parents=True, exist_ok=True)
 
     def save_image(self, image, folder_name: str = '', file_name: str = '', file_extension: str = None):
