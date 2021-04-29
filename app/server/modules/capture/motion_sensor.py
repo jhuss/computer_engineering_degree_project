@@ -22,6 +22,7 @@ from gpiozero import MotionSensor as GPIOMotionSensor
 from sanic.log import logger
 from app.server.utils.camera import Camera
 from app.server.utils.storage import Storage
+from app.server.utils.database.models.images import Capture as CaptureModel
 from app.server.utils.image_analysis import ImageAnalysis
 
 
@@ -69,6 +70,14 @@ class MotionSensor:
             'capture_{}'.format(frames_count),
             self.CAMERA.IMAGE_EXTENSION
         )
+
+        # add DB record of captured image
+        CaptureModel.insert(
+            image_file=saved_image.get('image'),
+            image_folder=saved_image.get('folder'),
+            datetime=datetime.fromtimestamp(saved_image.get('timestamp'))
+        ).execute()
+
         self.IMAGE_ANALYSIS.add_to_queue([saved_image])
 
     def sensor_off(self):

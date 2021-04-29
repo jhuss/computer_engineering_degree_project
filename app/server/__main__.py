@@ -20,6 +20,8 @@ from subprocess import Popen, PIPE
 from sanic import Sanic
 from sanic.log import logger
 from sanic.response import json
+from app.server.tasks import task_queue
+from app.server.utils.database import db_setup
 from app.server.modules.capture import capture_module
 
 # get init arguments
@@ -37,11 +39,17 @@ if environment not in environments:
 # Project Name 'ImgRecSysAlerts', alias for: 'Image Recognition System to Issue Security Alerts'
 Server = Sanic('ImgRecSysAlerts')
 
+# add task queue as part of application
+Server.__setattr__('TASK_QUEUE', task_queue)
+
 # load configuration
 try:
     Server.update_config('{}/config/{}.py'.format(os.getcwd(), environment))
 except FileNotFoundError as e:
     logger.error('!!! the configuration file for \'{}\' does not exist or could not be loaded'.format(environment))
+
+# database setup
+Server.__setattr__('DB', db_setup(Server.config))
 
 # register modules
 Server.blueprint(capture_module)

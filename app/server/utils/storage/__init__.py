@@ -36,16 +36,15 @@ class Storage(object):
         if file_extension is None or file_extension == '':
             raise AttributeError('the file extension must be specified')
 
+        timestamp = int(datetime.now().timestamp())
         folder_destination = join_path(self.CAPTURE_PATH, folder_name) if folder_name != '' else self.CAPTURE_PATH
         Path(folder_destination).mkdir(parents=True, exist_ok=True)
 
         if file_name == '':
-            now = datetime.now()
-            timestamp = int(now.timestamp())
             file_name = 'captured_{}{}'.format(timestamp, file_extension)
         else:
             file_name = '{}{}'.format(file_name, file_extension)
 
         image_path = join_path(folder_destination, file_name)
         open(image_path, 'wb').write(image.tobytes())
-        return {'folder': folder_destination, 'image': file_name}
+        return {'folder': folder_name, 'image': file_name, 'timestamp': timestamp}

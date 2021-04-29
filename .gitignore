@@ -1,5 +1,7 @@
+### Data
 data/captured_images/
 data/task_queue/
+data/application.db
 
 ### IDEs
 .idea/

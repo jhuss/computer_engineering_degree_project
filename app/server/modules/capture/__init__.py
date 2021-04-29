@@ -20,6 +20,7 @@ from sanic.response import json, raw
 from sanic.log import logger
 from app.server.utils.camera import Camera
 from app.server.utils.storage import Storage
+from app.server.utils.database.models.images import Capture as CaptureModel
 from app.server.utils.image_analysis import ImageAnalysis
 from .motion_sensor import MotionSensor
 
@@ -42,7 +43,7 @@ async def setup_capture(app, loop):
     config = app.config
     camera = Camera(config.get('CAMERA_SETTINGS'))
     storage = Storage(config.get('STORAGE_SETTINGS'))
-    image_analysis = ImageAnalysis(storage)
+    image_analysis = ImageAnalysis(storage, app.TASK_QUEUE)
 
     logger.info('MOTION SENSOR ENABLED: {}'.format(config.get('MOTION_SENSOR_ENABLE')))
     if config.get('MOTION_SENSOR_ENABLE') is True:
@@ -66,8 +67,16 @@ async def capture(request):
             'capture_{}'.format(datetime.now().strftime("%d:%m:%Y_%H:%M:%S")),
             camera.IMAGE_EXTENSION
         )
-        image_analysis.add_to_queue([saved_image])
 
-        return raw(captured_image.tobytes(), content_type='image/png')
+        # add DB record of captured image
+        CaptureModel.insert(
+            image_file=saved_image.get('image'),
+            image_folder=saved_image.get('folder'),
+            datetime=datetime.fromtimestamp(saved_image.get('timestamp'))
+        ).execute()
+
+        result = image_analysis.image_process(saved_image)
+
+        return raw(result.get('image'), content_type='image/jpeg')
     else:
         return json({'error': 'device not found'}, 500)

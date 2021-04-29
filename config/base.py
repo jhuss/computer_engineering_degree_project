@@ -3,6 +3,7 @@ DEBUG = False
 # server
 PORT = 8000
 HOST = 'localhost'
+DATABASE_NAME = 'application.db'
 
 # general options
 MOTION_SENSOR_ENABLE = True
