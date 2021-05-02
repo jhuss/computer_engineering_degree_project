@@ -62,9 +62,8 @@ class ImageAnalysis:
 
     def image_process(self, image_data):
         # open and analyze the captured image
-        img = Image.open(join_path(self.storage.CAPTURE_PATH, image_data['folder'], image_data['image']))
-        image_analyzed = self.detection_phase.detect(img)
-        img_edit = io.BytesIO()
+        pil_image = Image.open(join_path(self.storage.CAPTURE_PATH, image_data['folder'], image_data['image']))
+        image_analyzed = self.detection_phase.detect(pil_image)
 
         # create db record for results
         image_record = CaptureModel.select().where(
@@ -84,16 +83,22 @@ class ImageAnalysis:
             analysis_record.save()
             create_alert(image_record, analysis_record)
 
-            # add shape for detected location
-            draw = ImageDraw.Draw(img)
-            for obj in image_analyzed:
-                ymin, xmin, ymax, xmax = obj['bounding_box']
-                xmin = int(xmin * img.width)
-                xmax = int(xmax * img.width)
-                ymin = int(ymin * img.height)
-                ymax = int(ymax * img.height)
-                draw.rectangle([xmin, ymin, xmax, ymax], outline=(0xFF, 0, 0, 0xFF))
+        return image_analyzed
 
-        img.save(img_edit, format='JPEG')
-        img_edit.seek(0)
-        return {'analysis': image_analyzed, 'image': img_edit.getvalue()}
+    def draw_detected_area(self, image, analysis_result):
+        pil_image = Image.open(image)
+        image_edit = io.BytesIO()
+
+        # add shape for detected location
+        draw = ImageDraw.Draw(pil_image)
+        for obj in analysis_result:
+            ymin, xmin, ymax, xmax = obj['bounding_box']
+            xmin = int(xmin * pil_image.width)
+            xmax = int(xmax * pil_image.width)
+            ymin = int(ymin * pil_image.height)
+            ymax = int(ymax * pil_image.height)
+            draw.rectangle([xmin, ymin, xmax, ymax], outline=(0xFF, 0, 0, 0xFF))
+        pil_image.save(image_edit, format='JPEG')
+        image_edit.seek(0)
+
+        return image_edit.getvalue()

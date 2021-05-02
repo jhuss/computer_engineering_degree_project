@@ -13,6 +13,7 @@
 #   limitations under the License.
 
 
+import io
 from typing import Optional
 from datetime import datetime
 from sanic import Blueprint
@@ -76,7 +77,11 @@ async def capture(request):
         ).execute()
 
         result = image_analysis.image_process(saved_image)
+        if len(result) > 0:
+            captured_image = image_analysis.draw_detected_area(io.BytesIO(captured_image.tobytes()), result)
+        else:
+            captured_image = captured_image.tobytes()
 
-        return raw(result.get('image'), content_type='image/jpeg')
+        return raw(captured_image, content_type='image/jpeg')
     else:
         return json({'error': 'device not found'}, 500)
