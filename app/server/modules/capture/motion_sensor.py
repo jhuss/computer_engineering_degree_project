@@ -13,6 +13,7 @@
 #   limitations under the License.
 
 
+import io
 from typing import Optional
 import threading
 from signal import SIGTERM, sigwait, pthread_kill
@@ -70,6 +71,7 @@ class MotionSensor:
             'capture_{}'.format(frames_count),
             self.CAMERA.IMAGE_EXTENSION
         )
+        saved_image["binary"] = io.BytesIO(frame.tobytes())
 
         # add DB record of captured image
         CaptureModel.insert(

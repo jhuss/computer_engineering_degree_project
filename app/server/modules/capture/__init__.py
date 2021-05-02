@@ -13,9 +13,9 @@
 #   limitations under the License.
 
 
+from datetime import datetime
 import io
 from typing import Optional
-from datetime import datetime
 from sanic import Blueprint
 from sanic.response import json, raw
 from sanic.log import logger
@@ -68,6 +68,7 @@ async def capture(request):
             'capture_{}'.format(datetime.now().strftime("%d:%m:%Y_%H:%M:%S")),
             camera.IMAGE_EXTENSION
         )
+        saved_image['binary'] = io.BytesIO(captured_image.tobytes())
 
         # add DB record of captured image
         CaptureModel.insert(
@@ -78,10 +79,8 @@ async def capture(request):
 
         result = image_analysis.image_process(saved_image)
         if len(result) > 0:
-            captured_image = image_analysis.draw_detected_area(io.BytesIO(captured_image.tobytes()), result)
-        else:
-            captured_image = captured_image.tobytes()
+            captured_image = image_analysis.draw_detected_area(saved_image["binary"], result)
 
-        return raw(captured_image, content_type='image/jpeg')
+        return raw(captured_image.getvalue(), content_type='image/jpeg')
     else:
         return json({'error': 'device not found'}, 500)

@@ -61,9 +61,7 @@ class ImageAnalysis:
             self.queue.put((self.image_processing_task, image_data))
 
     def image_process(self, image_data):
-        # open and analyze the captured image
-        pil_image = Image.open(join_path(self.storage.CAPTURE_PATH, image_data['folder'], image_data['image']))
-        image_analyzed = self.detection_phase.detect(pil_image)
+        image_analyzed = self.detection_phase.detect(Image.open(image_data['binary']))
 
         # create db record for results
         image_record = CaptureModel.select().where(
@@ -101,4 +99,4 @@ class ImageAnalysis:
         pil_image.save(image_edit, format='JPEG')
         image_edit.seek(0)
 
-        return image_edit.getvalue()
+        return image_edit
