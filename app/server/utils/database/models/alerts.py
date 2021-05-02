@@ -15,12 +15,12 @@
 
 from datetime import datetime
 from enum import Enum
-from peewee import Model, ForeignKeyField, BooleanField, DateTimeField
+from peewee import ForeignKeyField, BooleanField, DateTimeField
 from app.server.utils.database.models.images import Capture, Analysis
-from . import EnumField
+from . import BaseModel, EnumField
 
 
-class Alert(Model):
+class Alert(BaseModel):
     class DeliveryChoices(Enum):
         EMAIL = 1
         SMS = 2  # to implement

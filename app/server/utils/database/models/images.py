@@ -13,16 +13,17 @@
 #   limitations under the License.
 
 
-from peewee import Model, ForeignKeyField, CharField, BooleanField, DateTimeField
+from peewee import ForeignKeyField, CharField, BooleanField, DateTimeField
+from . import BaseModel
 
 
-class Capture(Model):
+class Capture(BaseModel):
     image_file = CharField(index=True, unique=False)
     image_folder = CharField(index=True, unique=False)
     datetime = DateTimeField()
 
 
-class Analysis(Model):
+class Analysis(BaseModel):
     image = ForeignKeyField(Capture, backref='analysis', unique=True)
     analyzed = BooleanField(default=False)
     detected = BooleanField(default=False)
