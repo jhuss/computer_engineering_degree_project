@@ -23,7 +23,7 @@ class Capture(Model):
 
 
 class Analysis(Model):
-    image = ForeignKeyField(Capture, backref='id', unique=True)
+    image = ForeignKeyField(Capture, backref='analysis', unique=True)
     analyzed = BooleanField(default=False)
     detected = BooleanField(default=False)
     recognized = BooleanField(default=False)

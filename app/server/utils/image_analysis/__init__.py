@@ -21,6 +21,7 @@ from queue import Queue
 from threading import Thread
 from app.server.tasks import TaskQueue
 from app.server.utils import NumpyArrayEncoder
+from app.server.utils.alerts import create_alert
 from app.server.utils.storage import Storage
 from app.server.utils.database.models.images import Capture as CaptureModel, Analysis as AnalysisModel
 from .ml_interpreter import TensorFlowInterpreter
@@ -66,23 +67,22 @@ class ImageAnalysis:
         img_edit = io.BytesIO()
 
         # create db record for results
-        analysis_record = None
         image_record = CaptureModel.select().where(
             (CaptureModel.image_file == image_data['image']) & (CaptureModel.image_folder == image_data['folder'])
         ).get()
-        try:
-            analysis_record = AnalysisModel.get(AnalysisModel.image == image_record.id)
-        finally:
-            if not analysis_record:
-                analysis_record = AnalysisModel()
-        analysis_record.image = image_record.id
-        analysis_record.analyzed = True
-        analysis_record.detected = False
+        analysis_record, created = AnalysisModel.get_or_create(
+            image=image_record,
+            defaults={
+                'analyzed': True,
+                'detected': True
+            }
+        )
 
         if len(image_analyzed) > 0:
             analysis_record.detected = True
             analysis_record.analysis_result = json.dumps(image_analyzed, cls=NumpyArrayEncoder)
             analysis_record.save()
+            create_alert(image_record, analysis_record)
 
             # add shape for detected location
             draw = ImageDraw.Draw(img)
@@ -94,8 +94,6 @@ class ImageAnalysis:
                 ymax = int(ymax * img.height)
                 draw.rectangle([xmin, ymin, xmax, ymax], outline=(0xFF, 0, 0, 0xFF))
 
-        # save to DB and return results
-        analysis_record.save()
         img.save(img_edit, format='JPEG')
         img_edit.seek(0)
         return {'analysis': image_analyzed, 'image': img_edit.getvalue()}

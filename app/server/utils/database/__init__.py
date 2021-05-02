@@ -17,6 +17,7 @@ import os.path
 import sqlite3
 from peewee import SqliteDatabase
 from app.server.utils.database.models.images import Capture, Analysis
+from app.server.utils.database.models.alerts import Alert
 
 
 def db_setup(conf):
@@ -31,14 +32,14 @@ def db_setup(conf):
     finally:
         if db_connection:
             db_connection.close()
-            db_orm = SqliteDatabase(db_path)
+            db_orm = SqliteDatabase(db_path, pragmas={'foreign_keys': 1})
             check_tables(db_orm)
 
     return db_orm
 
 
 def check_tables(db):
-    models = [Capture, Analysis]
+    models = [Capture, Analysis, Alert]
     db.bind(models)
 
     for model in models:
