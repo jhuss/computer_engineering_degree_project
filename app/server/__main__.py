@@ -20,7 +20,6 @@ from subprocess import Popen, PIPE
 from sanic import Sanic
 from sanic.log import logger
 from sanic.response import json
-from app.server.tasks import task_queue
 from app.server.utils.database import db_setup
 from app.server.modules.capture import capture_module
 
@@ -38,9 +37,6 @@ if environment not in environments:
 
 # Project Name 'ImgRecSysAlerts', alias for: 'Image Recognition System to Issue Security Alerts'
 Server = Sanic('ImgRecSysAlerts')
-
-# add task queue as part of application
-Server.__setattr__('TASK_QUEUE', task_queue)
 
 # load configuration
 try:
@@ -62,7 +58,7 @@ async def root(request):
 
 @Server.listener('before_server_start')
 async def before_server_start(app, loop):
-    app.task_queue_process = Popen(['huey_consumer', 'app.server.tasks.task_queue'], stdout=PIPE, stderr=PIPE)
+    app.task_queue_process = Popen(['huey_consumer', 'app.server.tasks.task_queue', '-w', '2', '-k', 'process'], stdout=PIPE, stderr=PIPE)
     logger.info('TASK QUEUE STARTED')
 
 

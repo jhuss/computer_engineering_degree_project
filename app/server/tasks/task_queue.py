@@ -14,15 +14,16 @@
 
 
 import os
-import importlib.util
+import importlib
 from pathlib import Path
 from huey import SqliteHuey
+from ..utils.database import db_setup
 
 
 class TaskQueue(SqliteHuey):
     environment = None
     config = None
-    database_path = None
+    app_db = None
 
     def __init__(self):
         self.environment = os.environ.get('task_queue_environment')
@@ -32,16 +33,19 @@ class TaskQueue(SqliteHuey):
             exit(1)
 
         # load the same config from server
-        spec = importlib.util.spec_from_file_location(self.environment, '{}/config/{}.py'.format(os.getcwd(), self.environment))
-        self.config = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(self.config)
+        config_module_name = 'config'
+        config_path = '{}/config/{}.py'.format(os.getcwd(), self.environment)
+        spec = importlib.util.spec_from_file_location(config_module_name, config_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        self.config = module.__dict__
 
         # config db for task queue
-        db_folder_path = '{}/{}'.format(self.config.STORAGE_SETTINGS.get('DATA_FOLDER'), 'task_queue')
+        db_folder_path = '{}/{}'.format(self.config.get('STORAGE_SETTINGS').get('DATA_FOLDER'), 'task_queue')
         Path(db_folder_path).mkdir(parents=True, exist_ok=True)
-        self.database_path = '{}/{}'.format(db_folder_path, 'tasks.db')
+        database_path = '{}/{}'.format(db_folder_path, 'tasks.db')
 
-        super().__init__(name='task_queue', filename=self.database_path)
+        # APP db
+        self.app_db = db_setup(self.config)
 
-
-task_queue: TaskQueue = TaskQueue()
+        super().__init__(name='task_queue', filename=database_path)

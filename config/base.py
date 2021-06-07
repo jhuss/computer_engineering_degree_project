@@ -23,3 +23,15 @@ STORAGE_SETTINGS = {
     'CAPTURE_FOLDER': 'captured_images',
     'ML_MODEL_FOLDER': 'ml_models'
 }
+
+# alerts
+EMAIL_ALERT_SETTINGS = {
+    'SMTP_ADDRESS': '',
+    'SMTP_PORT': 25,
+    'ACCOUNT_ADDRESS': '',
+    'ACCOUNT_PASSWORD': '',
+    'STARTTLS': False
+}
+EMAIL_ALERT_SUBJECT = ''
+EMAIL_ALERT_SENDER = ''
+EMAIL_ALERT_DESTINATION = ['']

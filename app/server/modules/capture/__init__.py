@@ -44,7 +44,7 @@ async def setup_capture(app, loop):
     config = app.config
     camera = Camera(config.get('CAMERA_SETTINGS'))
     storage = Storage(config.get('STORAGE_SETTINGS'))
-    image_analysis = ImageAnalysis(storage, app.TASK_QUEUE)
+    image_analysis = ImageAnalysis(storage)
 
     logger.info('MOTION SENSOR ENABLED: {}'.format(config.get('MOTION_SENSOR_ENABLE')))
     if config.get('MOTION_SENSOR_ENABLE') is True:

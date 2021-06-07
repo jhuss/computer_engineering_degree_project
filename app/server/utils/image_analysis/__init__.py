@@ -15,11 +15,9 @@
 
 import io
 import json
-from os.path import join as join_path
 from PIL import Image, ImageDraw
 from queue import Queue
 from threading import Thread
-from app.server.tasks import TaskQueue
 from app.server.utils import NumpyArrayEncoder
 from app.server.utils.alerts import create_alert
 from app.server.utils.storage import Storage
@@ -35,10 +33,10 @@ class ImageAnalysisWorker(Thread):
 
     def run(self):
         while True:
-            # Get the task from the queue and expand the tuple
+            # Get the task from the queue and execute
             task, image_data = self.queue.get()
             try:
-                task.call_local(image_data)
+                task(image_data)
             finally:
                 self.queue.task_done()
 
@@ -46,19 +44,17 @@ class ImageAnalysisWorker(Thread):
 class ImageAnalysis:
     queue = Queue()
 
-    def __init__(self, storage: Storage, task_queue: TaskQueue):
+    def __init__(self, storage: Storage):
         self.storage = storage
-        self.task_queue = task_queue
         self.ml_interpreter = TensorFlowInterpreter(storage)
         self.detection_phase = DetectionPhase(self.ml_interpreter)
-        self.image_processing_task = task_queue.task()(self.image_process)
         self.worker = ImageAnalysisWorker(self.queue)
         self.worker.daemon = True
         self.worker.start()
 
     def add_to_queue(self, images_data):
         for image_data in images_data:
-            self.queue.put((self.image_processing_task, image_data))
+            self.queue.put((self.image_process, image_data))
 
     def image_process(self, image_data):
         image_analyzed = self.detection_phase.detect(Image.open(image_data['binary']))
