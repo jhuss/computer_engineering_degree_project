@@ -1,0 +1,23 @@
+body > footer {
+    padding: 20px 0;
+}
+
+h1.title {
+    text-align: center;
+}
+
+#reports .card-footer-item:hover {
+    background-color: #1d72aa;
+    color: #fff;
+}
+
+#report-details .preview {
+    display: inline-block;
+    position: relative;
+    margin-bottom: 2em;
+    width: 49%;
+}
+
+#report-details .preview .card {
+    padding: 1.8em 0;
+}

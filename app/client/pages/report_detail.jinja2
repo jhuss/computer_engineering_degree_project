@@ -1,0 +1,46 @@
+{% extends "layouts/base.jinja2" %}
+
+{% block title %}Reports{% endblock %}
+
+{% macro paginator(pagination, current_page) %}
+<nav class="pagination" role="navigation" aria-label="pagination">
+    <ul class="pagination-list">
+        {% for page in pagination %}
+            <li>
+                <a class="pagination-link{% if current_page == page.number %} is-current{% endif %}" aria-label="Goto page {{ page.number }}" href="{{ page.url }}">{{ page.number }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+</nav>
+{% endmacro %}
+
+{% block content %}
+<section id="report-details" class="section">
+    <div class="container">
+        <h1 class="title">
+            {{ context.title }}
+        </h1>
+
+        {{ paginator(context.data.pagination, context.data.current_page) }}
+
+        <div class="content">
+        {% for item in context.data.images %}
+        <div class="preview">
+            <div class="card">
+                <div class="card-image">
+                    <figure class="image">
+                        <img src="{{ "/reports/captured_image/" }}?folder={{ context.data.group }}&image={{ item.image_file }}" alt="{{ item.datetime }}"/>
+                        <figcaption>
+                            {{ item.datetime }}
+                        </figcaption>
+                    </figure>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        </div>
+
+        {{ paginator(context.data.pagination, context.data.current_page) }}
+    </div>
+</section>
+{% endblock %}

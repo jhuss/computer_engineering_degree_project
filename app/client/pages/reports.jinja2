@@ -1,0 +1,31 @@
+{% extends "layouts/base.jinja2" %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<section id="reports" class="section">
+    <div class="container">
+        <h1 class="title">
+            {{ context.title }}
+        </h1>
+
+        <div class="content">
+        {% for item in context.data.reports %}
+            <div class="card">
+                <div class="card-content">
+                    <div class="content">
+                        <div><strong>Captured Images:</strong> {{ item.images_count }}</div>
+                        <div><strong>Date Start:</strong> {{ item.date_start }}</div>
+                        <div><strong>Date End:</strong> {{ item.date_end }}</div>
+                    </div>
+                </div>
+                <footer class="card-footer">
+                    <a href="{{ item.report_url }}" class="card-footer-item">View</a>
+                </footer>
+            </div>
+            <br>
+        {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

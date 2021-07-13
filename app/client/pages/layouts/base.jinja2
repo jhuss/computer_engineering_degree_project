@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="/static/css/bulma.min.css">
+        <link rel="stylesheet" href="/static/css/app.css">
+        {% block head %}
+            <title>{% block title %}{% endblock %} - IRS2ISA</title>
+        {% endblock %}
+    </head>
+    <body>
+        <div class="container">
+            <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
+                <div class="navbar-brand">
+                    <div class="navbar-item" style="background-color: #7a7a7a;">
+                        <div style="text-align: center; padding-left: 0.5em;">IRS2ISA</div>
+                    </div>
+                </div>
+                <div class="navbar-menu">
+                    <div class="navbar-start">
+                        <a class="navbar-item" href="/">Home</a>
+                        <a class="navbar-item" href="/reports">Reports</a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        {% block content %}{% endblock %}
+        <footer>
+            <div class="content has-text-centered">
+            {% block footer %}
+                &copy; Copyright 2020-2021 by Jesus Jerez.
+            {% endblock %}
+            </div>
+        </footer>
+    </body>
+</html>
