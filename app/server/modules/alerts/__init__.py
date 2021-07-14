@@ -14,13 +14,14 @@
 
 
 from os.path import join as join_path
-from peewee import fn
+from peewee import fn, JOIN
 from sanic import Blueprint
 from sanic.response import raw
 from typing import Optional
 from app.server import jinja
-from app.server.utils.database.models.images import Capture as CaptureModel
+from app.server.utils.database.models.images import Capture as CaptureModel, Analysis as AnalysisModel
 from app.server.utils.storage import Storage
+import json
 import math
 
 
@@ -86,13 +87,32 @@ async def alert_report_details(request, group):
     report_details = CaptureModel.select(
         CaptureModel.image_file,
         CaptureModel.datetime,
-    ).where(CaptureModel.image_folder == group).paginate(current_page, images_per_page).dicts()
+        AnalysisModel.detected,
+        AnalysisModel.analysis_result,
+        AnalysisModel.recognized,
+        AnalysisModel.recognition_result,
+    ).join(AnalysisModel, JOIN.LEFT_OUTER, on=(AnalysisModel.image_id == CaptureModel.id)).where(CaptureModel.image_folder == group).paginate(current_page, images_per_page).dicts()
 
     for detail in report_details:
-        context['data']['images'].append({
+        image_details = {
             'image_file': detail['image_file'],
-            'datetime': detail['datetime'].strftime('%d/%m/%Y (%H:%M:%S)')
-        })
+            'datetime': detail['datetime'].strftime('%d/%m/%Y (%H:%M:%S)'),
+            'analysis_box': []
+        }
+
+        if detail['analysis_result']:
+            for box in json.loads(detail['analysis_result']):
+                ymin, xmin, ymax, xmax = box['bounding_box']
+                # TODO: configure image size
+                image_width = 640
+                image_height = 480
+                xmin = int(xmin * image_width)
+                xmax = int(xmax * image_width)
+                ymin = int(ymin * image_height)
+                ymax = int(ymax * image_height)
+                image_details['analysis_box'].append([xmin, ymin, xmax, ymax])
+
+        context['data']['images'].append(image_details)
 
     records = CaptureModel.select().where(CaptureModel.image_folder == group).count()
     for page in list(range(1, (math.ceil(records / images_per_page) + 1))):

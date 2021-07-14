@@ -28,8 +28,8 @@
         <div class="preview">
             <div class="card">
                 <div class="card-image">
-                    <figure class="image">
-                        <img src="{{ "/reports/captured_image/" }}?folder={{ context.data.group }}&image={{ item.image_file }}" alt="{{ item.datetime }}"/>
+                    <figure class="image" style="margin: 0;">
+                        <canvas id="{{ item.image_file }}"></canvas>
                         <figcaption>
                             {{ item.datetime }}
                         </figcaption>
@@ -43,4 +43,38 @@
         {{ paginator(context.data.pagination, context.data.current_page) }}
     </div>
 </section>
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript">
+    function drawCapture(elementId, imageUrl, boxes) {
+        let img = new Image;
+        img.src = imageUrl;
+        img.onload = () => {
+            let canvas = document.getElementById(elementId);
+            let context = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            context.drawImage(img, 0, 0);
+            context.beginPath();
+            context.lineWidth = 3;
+            context.strokeStyle = 'red';
+            boxes.forEach(box => {
+                context.rect(box[0], box[1], box[2], box[3]);
+            });
+            context.stroke();
+        }
+    }
+
+    // document ready
+    document.addEventListener("DOMContentLoaded", event => {
+    {% for item in context.data.images %}
+        drawCapture(
+        '{{ item.image_file }}',
+        '{{ "/reports/captured_image/" }}?folder={{ context.data.group }}&image={{ item.image_file }}',
+        {{ item.analysis_box }}
+        );
+    {% endfor %}
+    });
+</script>
 {% endblock %}
