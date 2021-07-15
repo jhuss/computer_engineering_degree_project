@@ -67,7 +67,7 @@ class ImageAnalysis:
             image=image_record,
             defaults={
                 'analyzed': True,
-                'detected': True
+                'detected': False
             }
         )
 

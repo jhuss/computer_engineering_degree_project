@@ -69,8 +69,19 @@ async def after_server_stop(app, loop):
 # setup endpoints
 @Server.route('/')
 async def root(request):
+    from app.server.utils.database.models.images import Capture as CaptureModel, Analysis as AnalysisModel
+
+    captures = CaptureModel.select().count()
+    detections = AnalysisModel.select().where(AnalysisModel.detected == 1).count()
+    recognition = AnalysisModel.select().where(AnalysisModel.recognized == 1).count()
+
     context = {
-        'title': '{}: Image Recognition System to Issue Security Alerts'.format(request.app.name)
+        'title': '{}: Image Recognition System to Issue Security Alerts'.format(request.app.name),
+        'stats': {
+            'captures': captures,
+            'detections': detections,
+            'recognition': recognition
+        }
     }
     return jinja.render('home.jinja2', request, context=context)
 
