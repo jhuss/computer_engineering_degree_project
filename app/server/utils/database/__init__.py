@@ -14,7 +14,6 @@
 
 
 import os.path
-import sqlite3
 from peewee import SqliteDatabase
 from app.server.utils.database.models.images import Capture, Analysis
 from app.server.utils.database.models.alerts import Alert
@@ -22,18 +21,21 @@ from app.server.utils.database.models.alerts import Alert
 
 def db_setup(conf):
     db_path = os.path.join(conf.get('STORAGE_SETTINGS')['DATA_FOLDER'], conf.get('DATABASE_NAME'))
-    db_connection = None
     db_orm = None
 
     try:
-        db_connection = sqlite3.connect(db_path)
-    except sqlite3.Error as e:
+        db_orm = SqliteDatabase(db_path, pragmas=(
+            ('foreign_keys', 1),
+            ('journal_mode', 'wal'),
+            ('journal_size_limit', -1),
+            ('locking_mode', 'exclusive'),
+            ('secure_delete', 1),
+            ('synchronous', 'full')
+        ))
+        db_orm.connect()
+        check_tables(db_orm)
+    except Exception as e:
         print(e)
-    finally:
-        if db_connection:
-            db_connection.close()
-            db_orm = SqliteDatabase(db_path, pragmas={'foreign_keys': 1})
-            check_tables(db_orm)
 
     return db_orm
 

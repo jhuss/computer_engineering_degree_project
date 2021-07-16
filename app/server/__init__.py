@@ -45,6 +45,7 @@ except FileNotFoundError as e:
 
 # database setup
 Server.ctx.DB = db_setup(Server.config)
+logger.info('DB WAS OPENED')
 
 # static setup
 Server.static('/static', os.path.join('app', 'client', 'static'))
@@ -60,10 +61,18 @@ async def before_server_start(app, loop):
     logger.info('TASK QUEUE STARTED')
 
 
+@Server.listener('after_server_start')
+async def after_server_start(app, loop):
+    logger.info('SERVER STARTED')
+
+
 @Server.listener('after_server_stop')
 async def after_server_stop(app, loop):
     app.task_queue_process.terminate()
     logger.info('TASK QUEUE TERMINATED')
+
+    Server.ctx.DB.close()
+    logger.info('DB CLOSED')
 
 
 # setup endpoints
@@ -72,8 +81,8 @@ async def root(request):
     from app.server.utils.database.models.images import Capture as CaptureModel, Analysis as AnalysisModel
 
     captures = CaptureModel.select().count()
-    detections = AnalysisModel.select().where(AnalysisModel.detected == 1).count()
-    recognition = AnalysisModel.select().where(AnalysisModel.recognized == 1).count()
+    detections = AnalysisModel.select().where(AnalysisModel.detected == True).count()
+    recognition = AnalysisModel.select().where(AnalysisModel.recognized == True).count()
 
     context = {
         'title': '{}: Image Recognition System to Issue Security Alerts'.format(request.app.name),
