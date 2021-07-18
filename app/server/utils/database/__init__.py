@@ -28,7 +28,6 @@ def db_setup(conf):
             ('foreign_keys', 1),
             ('journal_mode', 'wal'),
             ('journal_size_limit', -1),
-            ('locking_mode', 'exclusive'),
             ('secure_delete', 1),
             ('synchronous', 'full')
         ))

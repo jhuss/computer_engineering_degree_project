@@ -18,7 +18,7 @@ from peewee import fn, JOIN
 from sanic import Blueprint
 from sanic.response import raw
 from typing import Optional
-from app.server import jinja
+from app.server.main import jinja
 from app.server.utils.database.models.images import Capture as CaptureModel, Analysis as AnalysisModel
 from app.server.utils.storage import Storage
 import json

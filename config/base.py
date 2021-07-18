@@ -1,6 +1,7 @@
 DEBUG = False
 
 # server
+SCHEMA = 'http'
 PORT = 8000
 HOST = 'localhost'
 DATABASE_NAME = 'application.db'

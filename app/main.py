@@ -15,8 +15,7 @@
 
 import sys
 from sanic.log import logger
-from . import Server
-
+from app.server.main import Server
 
 if __name__ == '__main__':
     if Server.config.DEBUG:

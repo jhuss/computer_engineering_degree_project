@@ -77,7 +77,7 @@ if [ -d "$VIRTUALENV_DIR" ]; then
   export task_queue_environment=$ENVIRONMENT_MODE
 
   echo -e "\n${RUNNING_SERVER_LABEL}\n${RUNNING_SERVER_LABEL//?/$REPLACE_CHAR}"
-  cd "$PROJECT_DIR" && echo "$SERVER_ARGS_STRING" | xargs python -m "app.server"
+  cd "$PROJECT_DIR" && echo "$SERVER_ARGS_STRING" | xargs python -m "app.main"
 else
   echo "Python virtual environment does not exist."
   echo "Create it with setup.sh script."
