@@ -16,29 +16,24 @@
 from datetime import datetime
 from huey import crontab
 from io import BytesIO
+import math
 from os.path import join as join_path
 from PIL import Image
 from app.server.utils.database.models.alerts import Alert as AlertModel
 from app.server.utils.alerts.email import send_mail
 
 
-IMAGE_COLLAGE_COLUMNS = 3
-IMAGE_COLLAGE_ROWS = 5
+MAX_IMAGE_COLLAGE_COLUMNS = 3
+MAX_IMAGE_COLLAGE_ROWS = 5
 IMAGE_COLLAGE_WIDTH = 600
 IMAGE_COLLAGE_HEIGHT = 500
 
 
-def register_alert_tasks(task_queue):
+def register_alert_tasks(task_queue, app_cfg, app_db):
     @task_queue.periodic_task(crontab(minute='*/1'), name='alert')
     def send_alerts_task():
-        with task_queue.app_db:
+        with app_db:
             alerts = AlertModel.select().where(AlertModel.delivered == False)
-            collage = Image.new(
-                'RGB',
-                (IMAGE_COLLAGE_COLUMNS*IMAGE_COLLAGE_WIDTH, IMAGE_COLLAGE_ROWS*IMAGE_COLLAGE_HEIGHT),
-                color=(255, 255, 255)
-            )
-
             images = []
             image_folders = []
             image_count = 0
@@ -48,10 +43,10 @@ def register_alert_tasks(task_queue):
                 if image_folder != '' and image_folder not in image_folders:
                     image_folders.append(image_folder)
 
-                if image_count < (IMAGE_COLLAGE_COLUMNS*IMAGE_COLLAGE_ROWS):
+                if image_count < (MAX_IMAGE_COLLAGE_COLUMNS * MAX_IMAGE_COLLAGE_ROWS):
                     image = Image.open(join_path(
-                        task_queue.config.get('STORAGE_SETTINGS').get('DATA_FOLDER'),
-                        task_queue.config.get('STORAGE_SETTINGS').get('CAPTURE_FOLDER'),
+                        app_cfg.get('STORAGE_SETTINGS').get('DATA_FOLDER'),
+                        app_cfg.get('STORAGE_SETTINGS').get('CAPTURE_FOLDER'),
                         alert.image.image_folder,
                         alert.image.image_file
                     ))
@@ -61,12 +56,20 @@ def register_alert_tasks(task_queue):
                 image_count += 1
 
             if image_count > 0:
-                image_length = len(images)
                 image_count = 0
-                for i in range(0, IMAGE_COLLAGE_COLUMNS*IMAGE_COLLAGE_WIDTH, IMAGE_COLLAGE_WIDTH):
-                    for j in range(0, IMAGE_COLLAGE_ROWS*IMAGE_COLLAGE_HEIGHT, IMAGE_COLLAGE_HEIGHT):
+                image_length = len(images)
+                collage_columns = image_length if image_length < MAX_IMAGE_COLLAGE_COLUMNS else MAX_IMAGE_COLLAGE_COLUMNS
+                collage_rows = 1 if image_length <= MAX_IMAGE_COLLAGE_COLUMNS else math.ceil(image_length/MAX_IMAGE_COLLAGE_COLUMNS)
+                collage = Image.new(
+                    'RGB',
+                    (collage_columns * IMAGE_COLLAGE_WIDTH, collage_rows * IMAGE_COLLAGE_HEIGHT),
+                    color=(255, 255, 255)
+                )
+
+                for i in range(0, collage_rows * IMAGE_COLLAGE_HEIGHT, IMAGE_COLLAGE_HEIGHT):
+                    for j in range(0, collage_columns * IMAGE_COLLAGE_WIDTH, IMAGE_COLLAGE_WIDTH):
                         if image_count < image_length:
-                            collage.paste(images[image_count], (i, j))
+                            collage.paste(images[image_count], (j, i))
                             image_count += 1
 
                 collage_image = BytesIO()
@@ -89,9 +92,9 @@ def register_alert_tasks(task_queue):
                 report_links = []
                 for folder in image_folders:
                     report_links.append('{0}://{1}:{2}/reports/{3}'.format(
-                        task_queue.config.get('SCHEMA'),
-                        task_queue.config.get('HOST'),
-                        task_queue.config.get('PORT'),
+                        app_cfg.get('SCHEMA'),
+                        app_cfg.get('HOST'),
+                        app_cfg.get('PORT'),
                         folder
                     ))
                 email_body['TEXT'] = email_body['TEXT'].format('\n'.join(report_links))
@@ -99,10 +102,10 @@ def register_alert_tasks(task_queue):
 
                 result = {'delivered': False}
                 send_mail(
-                    task_queue.config.get('EMAIL_ALERT_SETTINGS'),
-                    task_queue.config.get('EMAIL_ALERT_SENDER'),
-                    task_queue.config.get('EMAIL_ALERT_DESTINATION'),
-                    task_queue.config.get('EMAIL_ALERT_SUBJECT'),
+                    app_cfg.get('EMAIL_ALERT_SETTINGS'),
+                    app_cfg.get('EMAIL_ALERT_SENDER'),
+                    app_cfg.get('EMAIL_ALERT_DESTINATION'),
+                    app_cfg.get('EMAIL_ALERT_SUBJECT'),
                     email_body,
                     collage_image,
                     result
