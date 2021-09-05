@@ -48,3 +48,6 @@ class TensorFlowInterpreter:
 
     def detect_callback(self, callback, label_file_path, model_file_path):
         return callback(self.load_labels(label_file_path), Interpreter(join_path(self.storage.ML_MODEL_PATH, model_file_path)))
+
+    def recognize_callback(self, callback, model_file_path):
+        return callback(Interpreter(join_path(self.storage.ML_MODEL_PATH, model_file_path)))

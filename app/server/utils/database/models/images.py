@@ -13,7 +13,7 @@
 #   limitations under the License.
 
 
-from peewee import ForeignKeyField, CharField, BooleanField, DateTimeField
+from peewee import ForeignKeyField, CharField, BooleanField, DateTimeField, BlobField
 from . import BaseModel
 
 
@@ -24,9 +24,14 @@ class Capture(BaseModel):
 
 
 class Analysis(BaseModel):
-    image = ForeignKeyField(Capture, backref='analysis', unique=True)
+    image = ForeignKeyField(Capture, backref='analysis', on_delete='CASCADE', unique=True)
     analyzed = BooleanField(default=False)
     detected = BooleanField(default=False)
     recognized = BooleanField(default=False)
     analysis_result = CharField(null=True)
-    recognition_result = CharField(null=True)
+
+
+class Recognition(BaseModel):
+    analysis = ForeignKeyField(Analysis, backref='recognition', on_delete='CASCADE', index=True, unique=False)
+    face_box = CharField(null=False)
+    result = BlobField(null=False, index=True, unique=True)

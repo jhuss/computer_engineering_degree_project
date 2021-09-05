@@ -47,7 +47,7 @@
 
 {% block js %}
 <script type="text/javascript">
-    function drawCapture(elementId, imageUrl, boxes) {
+    function drawCapture(elementId, imageUrl, boxes, recognitions) {
         let img = new Image;
         img.src = imageUrl;
         img.onload = () => {
@@ -56,14 +56,48 @@
             canvas.width = img.width;
             canvas.height = img.height;
             context.drawImage(img, 0, 0);
-            context.beginPath();
-            context.lineWidth = 3;
-            context.strokeStyle = 'red';
-            boxes.forEach(box => {
-                context.rect(box[0], box[1], box[2], box[3]);
-            });
-            context.stroke();
+            drawBox(context, boxes);
+            drawRecognition(context, recognitions);
         }
+    }
+
+    function drawBox(context, boxes) {
+        context.beginPath();
+        context.lineWidth = 1;
+        context.strokeStyle = 'red';
+        boxes.forEach(box => {
+            context.rect(box[0], box[1], box[2], box[3]);
+        });
+        context.stroke();
+        context.save();
+    }
+
+    function drawRecognition(context, recognitions) {
+        recognitions.forEach(recognition => {
+            let fill_color = (recognition['recognized'] === 'true') ? 'green' : 'red';
+            let font = 'bold 12px serif';
+
+            context.beginPath();
+            context.lineWidth = 1;
+            context.strokeStyle = fill_color;
+            let face_box = recognition['face_box'];
+            context.rect(face_box[0], face_box[1], face_box[2], face_box[3]);
+            context.stroke();
+
+            // label
+            context.save();
+            context.font = font;
+            context.textBaseline = 'top';
+            let name = recognition['name'];
+            let width = context.measureText(name).width;
+            let x = face_box[0];
+            let y = face_box[1] + face_box[3];
+            context.fillStyle = fill_color;
+            context.fillRect(x, y, width, parseInt(font, 12));
+            context.fillStyle = '#fff';
+            context.fillText(name, x, y);
+            context.restore();
+        });
     }
 
     // document ready
@@ -72,7 +106,8 @@
         drawCapture(
         '{{ item.image_file }}',
         '{{ "/reports/captured_image/" }}?folder={{ context.data.group }}&image={{ item.image_file }}',
-        {{ item.analysis_box }}
+        {{ item.analysis_box }},
+        {{ item.recognitions }}
         );
     {% endfor %}
     });

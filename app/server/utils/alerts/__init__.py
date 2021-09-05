@@ -17,6 +17,7 @@ from app.server.utils.database.models.alerts import Alert as AlertModel
 
 
 def create_alert(image_record, analysis_record):
+    # TODO: check if detected and recognized
     alert_record, created = AlertModel.get_or_create(
         image=image_record,
         analysis=analysis_record,

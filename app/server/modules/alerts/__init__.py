@@ -19,7 +19,8 @@ from sanic import Blueprint
 from sanic.response import raw
 from typing import Optional
 from app.server.main import jinja
-from app.server.utils.database.models.images import Capture as CaptureModel, Analysis as AnalysisModel
+from app.server.utils.database.models.images import Capture as CaptureModel, Analysis as AnalysisModel, Recognition as RecognitionModel
+from app.server.utils.database.models.authorized import Authorized as AuthorizedModel
 from app.server.utils.storage import Storage
 import json
 import math
@@ -55,23 +56,26 @@ async def alert_reports(request):
     ).group_by(CaptureModel.image_folder).dicts()
 
     for report in reports:
-        if report['image_folder'] != '':
-            context['data']['reports'].append({
-                'images_count': report['images'],
-                'date_start': report['start'].strftime('%d/%m/%Y (%H:%M:%S)'),
-                'date_end': report['end'].strftime('%d/%m/%Y (%H:%M:%S)'),
-                'report_url': request.app.url_for('alert_module.alert_report_details', group=report['image_folder'])
-            })
+        if report['image_folder'] == '':
+            report['image_folder'] = 'ungrouped'
+
+        context['data']['reports'].append({
+            'images_count': report['images'],
+            'date_start': report['start'].strftime('%d/%m/%Y (%H:%M:%S)'),
+            'date_end': report['end'].strftime('%d/%m/%Y (%H:%M:%S)'),
+            'report_url': request.app.url_for('alert_module.alert_report_details', group=report['image_folder'])
+        })
 
     return jinja.render('reports.jinja2', request, context=context)
 
 
 @alert_module.route('/<group:string>', methods=['GET'])
 async def alert_report_details(request, group):
+    folder = group if group not in ['', 'ungrouped'] else ''
     context = {
         'title': '{}: Report details'.format(request.app.name),
         'data': {
-            'group': group,
+            'group': folder,
             'images': [],
             'pagination': []
         }
@@ -87,30 +91,35 @@ async def alert_report_details(request, group):
     report_details = CaptureModel.select(
         CaptureModel.image_file,
         CaptureModel.datetime,
+        AnalysisModel.id.alias('analysis_id'),
         AnalysisModel.detected,
         AnalysisModel.analysis_result,
         AnalysisModel.recognized,
-        AnalysisModel.recognition_result,
-    ).join(AnalysisModel, JOIN.LEFT_OUTER, on=(AnalysisModel.image_id == CaptureModel.id)).where(CaptureModel.image_folder == group).paginate(current_page, images_per_page).dicts()
+    ).join(AnalysisModel, JOIN.LEFT_OUTER, on=(AnalysisModel.image_id == CaptureModel.id)).where(CaptureModel.image_folder == folder).paginate(current_page, images_per_page).dicts()
 
     for detail in report_details:
         image_details = {
             'image_file': detail['image_file'],
             'datetime': detail['datetime'].strftime('%d/%m/%Y (%H:%M:%S)'),
-            'analysis_box': []
+            'analysis_box': [],
+            'recognitions': []
         }
 
         if detail['analysis_result']:
             for box in json.loads(detail['analysis_result']):
                 ymin, xmin, ymax, xmax = box['bounding_box']
-                # TODO: configure image size
-                image_width = 640
-                image_height = 480
-                xmin = int(xmin * image_width)
-                xmax = int(xmax * image_width)
-                ymin = int(ymin * image_height)
-                ymax = int(ymax * image_height)
                 image_details['analysis_box'].append([xmin, ymin, xmax, ymax])
+
+        recognition_record = RecognitionModel.get_or_none(analysis=detail['analysis_id'])
+        if recognition_record:
+            face_box = json.loads(recognition_record.face_box)
+            authorized = AuthorizedModel.get_or_none(recognition=recognition_record)
+            if authorized:
+                image_details['recognitions'].append({
+                    'face_box': face_box,
+                    'name': '{}'.format('unknown {}'.format(authorized.id) if not authorized.person else authorized.person.name),
+                    'recognized': json.dumps(False if not authorized.person else True)
+                })
 
         context['data']['images'].append(image_details)
 

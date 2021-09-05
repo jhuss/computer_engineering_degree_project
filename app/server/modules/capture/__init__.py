@@ -15,6 +15,7 @@
 
 from datetime import datetime
 import io
+from os.path import join as join_path
 from typing import Optional
 from sanic import Blueprint
 from sanic.response import json, raw
@@ -77,10 +78,30 @@ async def capture(request):
             datetime=datetime.fromtimestamp(saved_image.get('timestamp'))
         ).execute()
 
-        result = image_analysis.image_process(saved_image)
+        result, authorized = image_analysis.image_process(saved_image)
         if len(result) > 0:
-            captured_image = image_analysis.draw_detected_area(saved_image["binary"], result)
+            captured_image = image_analysis.draw_detected_area(saved_image["binary"], result, authorized)
 
         return raw(captured_image.getvalue(), content_type='image/jpeg')
     else:
         return json({'error': 'device not found'}, 500)
+
+
+@capture_module.route('/test_image', methods=['GET'])
+async def test_image(request):
+    args = request.get_args()
+    image_folder = args.get('folder', default='')
+    image_name = args.get('image')
+    image = open(join_path(storage.CAPTURE_PATH, image_folder, image_name), 'rb')
+
+    result, authorized = image_analysis.image_process({
+        'binary': image,
+        'image': image_name,
+        'folder': image_folder
+    })
+
+    if len(result) > 0:
+        image = image_analysis.draw_detected_area(image, result, authorized)
+        return raw(image.getvalue(), content_type='image/jpeg')
+
+    return raw(image.read(), content_type='image/jpeg')

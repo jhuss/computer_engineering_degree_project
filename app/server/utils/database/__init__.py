@@ -15,8 +15,9 @@
 
 import os.path
 from peewee import SqliteDatabase
-from app.server.utils.database.models.images import Capture, Analysis
+from app.server.utils.database.models.images import Capture, Analysis, Recognition
 from app.server.utils.database.models.alerts import Alert
+from app.server.utils.database.models.authorized import Person, Authorized
 
 
 def db_setup(conf):
@@ -40,7 +41,7 @@ def db_setup(conf):
 
 
 def check_tables(db):
-    models = [Capture, Analysis, Alert]
+    models = [Capture, Analysis, Alert, Recognition, Person, Authorized]
     db.bind(models)
 
     for model in models:

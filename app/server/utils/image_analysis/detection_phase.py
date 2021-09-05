@@ -13,6 +13,7 @@
 #   limitations under the License.
 
 
+import numpy as np
 from os.path import join as join_path
 from .ml_interpreter import TensorFlowInterpreter
 
@@ -31,12 +32,10 @@ class DetectionPhase:
         def detection(labels, interpreter):
             interpreter.allocate_tensors()
             threshold = 0.4
-
             input_details = interpreter.get_input_details()
-            output_details = interpreter.get_output_details()
-
-            height = input_details[0]['shape'][1]
-            width = input_details[0]['shape'][2]
+            input_shape = input_details[0]['shape']
+            height = input_shape[1]
+            width = input_shape[2]
 
             self.interpreter.set_input_tensor(interpreter, image_data.copy().convert('RGB').resize((width, height)))
             interpreter.invoke()
@@ -49,8 +48,9 @@ class DetectionPhase:
             results = []
             for i in range(count):
                 if scores[i] >= threshold:
+                    ymin, xmin, ymax, xmax = boxes[i]
                     result = {
-                        'bounding_box': boxes[i],
+                        'bounding_box': [ymin * image_data.height, xmin * image_data.width, ymax * image_data.height, xmax * image_data.width],
                         'class_id': labels[classes[i]],
                         'score': scores[i]
                     }
@@ -62,3 +62,25 @@ class DetectionPhase:
         label_file_path = join_path('detection', 'labelmap.txt')
         model_file_path = join_path('detection', 'detect.tflite')
         return self.interpreter.detect_callback(detection, label_file_path, model_file_path)
+
+    def recognize(self, image_data):
+        def recognition(interpreter):
+            interpreter.allocate_tensors()
+            input_details = interpreter.get_input_details()
+            output_details = interpreter.get_output_details()
+            input_shape = input_details[0]['shape']
+            height = input_shape[1]
+            width = input_shape[2]
+
+            normalized = image_data.resize((width, height))
+            normalized = (np.float32(normalized) - 127.5) / 127.5
+            normalized = np.expand_dims(normalized, axis=0)
+
+            interpreter.set_tensor(input_details[0]['index'], normalized)
+            interpreter.invoke()
+
+            output_data = interpreter.get_tensor(output_details[0]['index'])
+            return np.squeeze(output_data)
+
+        model_file_path = join_path('recognition', 'MobileFaceNet.tflite')
+        return self.interpreter.recognize_callback(recognition, model_file_path)
