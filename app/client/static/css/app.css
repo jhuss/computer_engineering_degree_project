@@ -11,13 +11,27 @@ h1.title {
     color: #fff;
 }
 
+#report-details .content {
+    justify-content: space-between;
+}
+
 #report-details .preview {
-    display: inline-block;
     position: relative;
     margin-bottom: 2em;
     width: 49%;
+    flex: 0 49.5%;
 }
 
-#report-details .preview .card {
-    padding: 1.8em 0;
+#report-details .preview .capture {
+    position: relative;
+    left: -0.5rem;
+}
+
+#report-details .preview .recognition {
+    border-bottom: 1px solid #d9d9d9;
+    padding: 2px 4px 4px;
+}
+
+#report-details .preview .recognition:not(:last-child) {
+    margin-bottom: 0.5em;
 }

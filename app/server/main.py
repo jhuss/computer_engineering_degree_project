@@ -98,5 +98,7 @@ async def root(request):
 # register modules
 from app.server.modules.alerts import alert_module
 from app.server.modules.capture import capture_module
+from app.server.modules.authorization import authorization_module
 Server.blueprint(alert_module)
 Server.blueprint(capture_module)
+Server.blueprint(authorization_module)

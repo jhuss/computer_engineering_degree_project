@@ -23,17 +23,56 @@
 
         {{ paginator(context.data.pagination, context.data.current_page) }}
 
-        <div class="content">
+        <div class="content is-flex is-flex-wrap-wrap is-flex-grow-0">
         {% for item in context.data.images %}
+        {% set image_idx = 'img'+loop.index|string %}
         <div class="preview">
-            <div class="card">
-                <div class="card-image">
-                    <figure class="image" style="margin: 0;">
-                        <canvas id="{{ item.image_file }}"></canvas>
-                        <figcaption>
-                            {{ item.datetime }}
-                        </figcaption>
-                    </figure>
+            <div class="box">
+                <div class="content">
+                    <div class="block">
+                        <div class="columns is-multiline">
+                            <div class="column is-size-6">
+                                <span class="has-text-weight-bold">File:</span>
+                                <span>{{ item.image_file }}</span>
+                            </div>
+                            <div class="column is-size-6 has-text-right">
+                                <span class="has-text-weight-bold">Datetime:</span>
+                                <span>{{ item.datetime }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="block">
+                        <canvas class="capture" id="{{ item.image_file }}"></canvas>
+                    </div>
+                    {% if item.recognitions|length > 0 %}
+                    <div class="block">
+                        {% for recognition in item.recognitions %}
+                        {% set recognition_idx = 'r'+loop.index|string %}
+                        <div class="recognition">
+                            <nav class="level">
+                                <div class="level-left">
+                                    <div class="level-item">
+                                        <span class="name has-text-weight-bold tag is-medium{% if recognition.recognized == 'true' %} is-success{% else %} is-danger{% endif %}">
+                                            {{ recognition.name }}
+                                        </span>
+                                    </div>
+                                    <div class="level-item">
+                                        <div class="select is-small">
+                                            <select id="select-{{ image_idx+'-'+recognition_idx }}" class="authorized-selection" data-default="{{ recognition.name }}" data-rel_id="{{ image_idx+'-'+recognition_idx }}"></select>
+                                        </div>
+                                    </div>
+                                    <div class="level-item is-hidden">
+                                        <input id="input-{{ image_idx+'-'+recognition_idx }}" class="input is-small" type="text" placeholder="New Name">
+                                    </div>
+                                    <div class="level-item is-hidden">
+                                        <a id="save-{{ image_idx+'-'+recognition_idx }}" class="save-authorized button is-small is-info" data-rel_id="{{ image_idx+'-'+recognition_idx }}" data-record="{{ recognition.record }}">Save</a>
+                                    </div>
+                                </div>
+                            </nav>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -100,16 +139,101 @@
         });
     }
 
+    async function getAvailableAuthorized() {
+        return await fetch('/authorized')
+            .then(response => response.json())
+            .then(data => { return data });
+    }
+
+    async function setupAuthorizationUpdate() {
+        const selects = document.getElementsByClassName('authorized-selection');
+        const saveButtons = document.getElementsByClassName('save-authorized');
+        const auth = await getAvailableAuthorized();
+
+        Array.from(selects).forEach(select => {
+            const currentValue = (auth.includes(select.dataset.default)) ? select.dataset.default : 'Other';
+            const currentOtherInput = document.getElementById(`input-${select.dataset.rel_id}`);
+            const currentSaveButton = document.getElementById(`save-${select.dataset.rel_id}`);
+
+            // add available authorized
+            auth.forEach(item => {
+                let option = document.createElement('option');
+                option.value = item;
+                option.text = item;
+                if (currentValue === item) {
+                    option.selected = true;
+                    if (item === 'Other') {
+                        currentOtherInput.parentElement.classList.remove('is-hidden');
+                        currentSaveButton.parentElement.classList.remove('is-hidden');
+                    }
+                }
+                select.add(option, null);
+            });
+
+            select.addEventListener('change', event => {
+                const selection = event.target.value;
+                const otherInput = document.getElementById(`input-${select.dataset.rel_id}`);
+                const saveButton = document.getElementById(`save-${select.dataset.rel_id}`);
+
+                if (selection === 'Other') {
+                    otherInput.parentElement.classList.remove('is-hidden');
+                } else {
+                    otherInput.parentElement.classList.add('is-hidden');
+                }
+
+                if (event.target.dataset.default !== selection) {
+                    saveButton.parentElement.classList.remove('is-hidden');
+                } else {
+                    saveButton.parentElement.classList.add('is-hidden');
+                }
+            });
+        });
+
+        Array.from(saveButtons).forEach(button => {
+            button.addEventListener('click', event => {
+                const selection = document.getElementById(`select-${event.target.dataset.rel_id}`);
+                const custom_value = document.getElementById(`input-${event.target.dataset.rel_id}`);
+                const value = (selection.value !== 'Other') ? selection.value : custom_value.value;
+                const record = event.target.dataset.record;
+
+                fetch('/update_authorized', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        'record': record,
+                        'name': value
+                    }),
+                }).then(response => response.json())
+                .then(data => {
+                    if (data.message === 'updated') location.reload();
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+            });
+        });
+    }
+
+    const data = [
+    {%- for item in context.data.images %}
+        [
+            '{{ item.image_file }}',
+            '{{ "/reports/captured_image/" }}?folder={{ context.data.group }}&image={{ item.image_file }}',
+            {{ item.analysis_box }},
+            {{ item.recognitions }}
+        ],
+    {%- endfor %}
+    ];
+
     // document ready
     document.addEventListener("DOMContentLoaded", event => {
-    {% for item in context.data.images %}
-        drawCapture(
-        '{{ item.image_file }}',
-        '{{ "/reports/captured_image/" }}?folder={{ context.data.group }}&image={{ item.image_file }}',
-        {{ item.analysis_box }},
-        {{ item.recognitions }}
-        );
-    {% endfor %}
+        data.forEach(item => {
+            drawCapture(item[0], item[1], item[2], item[3]);
+        });
+
+        setupAuthorizationUpdate();
     });
 </script>
 {% endblock %}

@@ -118,7 +118,8 @@ async def alert_report_details(request, group):
                 image_details['recognitions'].append({
                     'face_box': face_box,
                     'name': '{}'.format('unknown {}'.format(authorized.id) if not authorized.person else authorized.person.name),
-                    'recognized': json.dumps(False if not authorized.person else True)
+                    'recognized': json.dumps(False if not authorized.person else True),
+                    'record': recognition_record.id
                 })
 
         context['data']['images'].append(image_details)
