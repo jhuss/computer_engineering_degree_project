@@ -51,6 +51,11 @@ class Camera:
 
                 if camera_device.isOpened():
                     camera_info = camera_device
+                    # TODO: move to config
+                    width = 1280
+                    height = 960
+                    camera_info.set(cv.CAP_PROP_FRAME_WIDTH, width)
+                    camera_info.set(cv.CAP_PROP_FRAME_HEIGHT, height)
                     camera_info.set(cv.CAP_PROP_AUTOFOCUS, False)
                     camera_info.set(cv.CAP_PROP_BUFFERSIZE, self.DEVICE_BUFFER)
             except Exception as e:

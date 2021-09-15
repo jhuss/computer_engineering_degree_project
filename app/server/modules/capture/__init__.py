@@ -81,8 +81,9 @@ async def capture(request):
         result, authorized = image_analysis.image_process(saved_image)
         if len(result) > 0:
             captured_image = image_analysis.draw_detected_area(saved_image["binary"], result, authorized)
+            return raw(captured_image.getvalue(), content_type='image/jpeg')
 
-        return raw(captured_image.getvalue(), content_type='image/jpeg')
+        return raw(captured_image.tobytes(), content_type='image/jpeg')
     else:
         return json({'error': 'device not found'}, 500)
 

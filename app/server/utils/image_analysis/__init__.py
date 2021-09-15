@@ -100,9 +100,9 @@ class ImageAnalysis:
 
                 recognition_record, created = RecognitionModel.get_or_create(
                     analysis=analysis_record,
+                    result=recognized_binary.read(),
                     defaults={
-                        'face_box': json.dumps(face_info['box']),
-                        'result': recognized_binary.read()
+                        'face_box': json.dumps(face_info['box'])
                     }
                 )
                 authorized = AuthorizedModel.get_or_none(recognition=recognition_record)

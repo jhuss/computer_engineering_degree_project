@@ -92,9 +92,11 @@
         img.onload = () => {
             let canvas = document.getElementById(elementId);
             let context = canvas.getContext('2d');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            context.drawImage(img, 0, 0);
+            const width = img.width > 640 ? 640 : img.width;
+            const height = img.height > 480 ? 480 : img.height;
+            canvas.width = width;
+            canvas.height = height;
+            context.drawImage(img, 0, 0, width, height);
             drawBox(context, boxes);
             drawRecognition(context, recognitions);
         }
