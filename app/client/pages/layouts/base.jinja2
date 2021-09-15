@@ -16,6 +16,11 @@
                     <div class="navbar-item" style="background-color: #7a7a7a;">
                         <div style="text-align: center; padding-left: 0.5em;">IRS2ISA</div>
                     </div>
+                    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                    </a>
                 </div>
                 <div class="navbar-menu">
                     <div class="navbar-start">
@@ -36,5 +41,15 @@
         </footer>
 
     {% block js %}{% endblock %}
+    <script type="text/javascript">
+        // document ready
+        document.addEventListener('DOMContentLoaded', event => {
+            const burger = document.getElementsByClassName('navbar-burger')[0];
+            burger.onclick = function () {
+                const menu = document.getElementsByClassName('navbar-menu')[0];
+                menu.classList.toggle('is-active');
+            }
+        });
+    </script>
     </body>
 </html>

@@ -25,6 +25,8 @@ h1.title {
 #report-details .preview .capture {
     position: relative;
     left: -0.5rem;
+    height: auto;
+    width: 100%;
 }
 
 #report-details .preview .recognition {
@@ -34,4 +36,11 @@ h1.title {
 
 #report-details .preview .recognition:not(:last-child) {
     margin-bottom: 0.5em;
+}
+
+@media (max-width: 1300px) {
+    #report-details .preview {
+        flex: none;
+        width: 100%;
+    }
 }
