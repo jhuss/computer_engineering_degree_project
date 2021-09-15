@@ -133,7 +133,7 @@ class ImageAnalysis:
             analysis_record.recognized = True
             analysis_record.save()
 
-        create_alert(image_record, analysis_record)
+        create_alert(image_record, analysis_record, authorized_found)
         return image_analyzed, authorized_found
 
     def draw_detected_area(self, image, analysis_result, authorized=None):

@@ -16,11 +16,13 @@
 from app.server.utils.database.models.alerts import Alert as AlertModel
 
 
-def create_alert(image_record, analysis_record):
-    # TODO: check if detected and recognized
-    alert_record, created = AlertModel.get_or_create(
-        image=image_record,
-        analysis=analysis_record,
-        delivery_method=AlertModel.DeliveryChoices.EMAIL
-    )
-    return alert_record
+def create_alert(image_record, analysis_record, authorized_records):
+    all_persons = list(map(lambda x: x.person if x.person is not None else None, authorized_records))
+
+    if len(all_persons) == 0 or None in all_persons:
+        alert_record, created = AlertModel.get_or_create(
+            image=image_record,
+            analysis=analysis_record,
+            delivery_method=AlertModel.DeliveryChoices.EMAIL
+        )
+        return alert_record
