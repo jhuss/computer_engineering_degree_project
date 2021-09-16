@@ -124,7 +124,7 @@ async def alert_report_details(request, group):
 
         context['data']['images'].append(image_details)
 
-    records = CaptureModel.select().where(CaptureModel.image_folder == group).count()
+    records = CaptureModel.select().where(CaptureModel.image_folder == folder).count()
     for page in list(range(1, (math.ceil(records / images_per_page) + 1))):
         context['data']['pagination'].append({
             'number': page,
