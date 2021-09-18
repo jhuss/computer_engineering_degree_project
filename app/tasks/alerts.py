@@ -40,8 +40,9 @@ def register_alert_tasks(task_queue, app_cfg, app_db):
 
             for alert in alerts:
                 image_folder = alert.image.image_folder
-                if image_folder != '' and image_folder not in image_folders:
-                    image_folders.append(image_folder)
+                if image_folder == '':
+                    image_folder = 'ungrouped'
+                image_folders.append(image_folder)
 
                 if image_count < (MAX_IMAGE_COLLAGE_COLUMNS * MAX_IMAGE_COLLAGE_ROWS):
                     image = Image.open(join_path(
