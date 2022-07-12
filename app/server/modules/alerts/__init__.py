@@ -69,8 +69,8 @@ async def alert_reports(request):
     return jinja.render('reports.jinja2', request, context=context)
 
 
-@alert_module.route('/<group:string>', methods=['GET'])
-async def alert_report_details(request, group):
+@alert_module.route('/<group:str>', methods=['GET'])
+async def alert_report_details(request, group: str):
     folder = group if group not in ['', 'ungrouped'] else ''
     context = {
         'title': '{}: Report details'.format(request.app.name),

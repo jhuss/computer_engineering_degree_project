@@ -27,6 +27,35 @@ REQUIREMENTS_INSTALLING_LABEL="Installing python requirements..."
 DONE_LABEL="Done"
 REPLACE_CHAR="="
 
+# requirements
+## ubuntu/raspbian
+PACKAGES=(
+  "build-essential"
+  "cmake"
+  "python3-dev"
+  "python3-pip"
+  "python3-venv"
+  "python3-opencv"
+  "python3-uvloop"
+  "python3-pil"
+  "python3-numpy"
+)
+MISSING=()
+
+for P in ${PACKAGES[@]}; do
+  INSTALLED=$(dpkg-query -W -f='${Status}' ${P} 2>/dev/null | grep -c "ok installed")
+
+  if [ $INSTALLED -eq 0 ]; then
+    MISSING+=(${P})
+  fi
+done
+
+if [ ${#MISSING[@]} -gt 0 ]; then
+  echo "Please install all dependencies first and try again."
+  echo " - Required dependencies: ${MISSING[@]}"
+  exit 1
+fi
+
 # check if virtualenv exist
 if [ ! -d "$VIRTUALENV_DIR" ]; then
   echo -e "${VIRTUALENV_INSTALLING_LABEL}\n${VIRTUALENV_INSTALLING_LABEL//?/$REPLACE_CHAR}"
